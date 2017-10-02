@@ -5,3 +5,4 @@ This is a repo for labs and assignments for my CS class
 
 ### Contents
 * Lab 02 - Winsock Application 
+* Lab 03 - Socket Client (In Progress)
