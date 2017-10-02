@@ -3,5 +3,5 @@ This is a repo for labs and assignments for my CS class
 
 ![](https://i.imgur.com/S7uyGRx.jpg)
 
-Contents
+### Contents
 * Lab 02 - Winsock Application 
