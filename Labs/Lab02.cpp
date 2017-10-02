@@ -1,8 +1,7 @@
 /*
  * Author: Brett Harvey
  * Date: September 25th, 2017
- * Description:
- *
+ * Description: Creating a winsock application 
  */
 
 // Library: to Import -> libws2_32.a
