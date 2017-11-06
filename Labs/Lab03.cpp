@@ -1,108 +1,122 @@
 //============================================================================
-// Name        : Lab7.cpp
+// Name        : cpp.cpp
 // Author      : Brett Harvey
-// Version     : 1.0
-// Description :   Write a client program to execute a single HTTP GET on any type of content. The requested file will be stored locally.
+// Version     :
+// Copyright   : Your copyright notice
+// Description : Lab 03 in C++, Ansi-style
 //============================================================================
 
-#include <winsock2.h>
-#include <WS2tcpip.h>
-#include <windows.h>
 #include <iostream>
-#pragma comment(lib,"ws2_32.lib")
+#include <winsock2.h>
+#include <ws2tcpip.h>
+#define DEFAULT_BUFLEN 2048
+#define DEFAULT_PORT "80"
+#pragma comment (lib, "Ws2_32.lib")
+
 using namespace std;
-int main(){
 
-	/* Initialize Dependencies to the WinSocket. */
-	WSADATA wsaData;
-	if (WSAStartup(MAKEWORD(2, 2), &wsaData) != 0) {
-		cout << "WSAStartup failed.\n";
-		system("pause");
-		return -1;
-	}
+struct addrinfo *result = NULL,
+                *ptr = NULL,
+                hints;
 
-	/* We first prepare some "hints" for the "getaddrinfo" function
-	to tell it, that we are looking for a IPv4 TCP Connection. */
-	struct addrinfo hints;
-	ZeroMemory(&hints, sizeof(hints));
-	hints.ai_family = AF_INET;          // We are targeting IPv4
-	hints.ai_protocol = IPPROTO_TCP;    // We are targeting TCP
-	hints.ai_socktype = SOCK_STREAM;    // We are targeting TCP so its SOCK_STREAM
+int main() {
 
-	/* Aquiring of the IPv4 address of a host using the newer
-	"getaddrinfo" function which outdated "gethostbyname".
-	 It will search for IPv4 addresses using the TCP-Protocol. */
-	struct addrinfo* targetAdressInfo = NULL;
-	DWORD getAddrRes = getaddrinfo("cse.stfx.ca", NULL, &hints, &targetAdressInfo);
-	if (getAddrRes != 0 || targetAdressInfo == NULL)
-	{
-		cout << "Could not resolve the Host Name" << endl;
-		system("pause");
-		WSACleanup();
-		return -1;
-	}
+    int recvbuflen = DEFAULT_BUFLEN;
 
-	/* Create the Socket Address Informations, using IPv4
-	We dont have to take care of sin_zero, it is only used to extend the length of SOCKADDR_IN to the size of SOCKADDR */
-	SOCKADDR_IN sockAddr;
-	sockAddr.sin_addr = ((struct sockaddr_in*) targetAdressInfo->ai_addr)->sin_addr;    // The IPv4 Address from the Address Resolution Result
-	sockAddr.sin_family = AF_INET;  // IPv4
-	sockAddr.sin_port = htons(80);  // HTTP Port: 80
+    char *sendbuf = "This is a test\n";
+    char recvbuf[DEFAULT_BUFLEN];
 
-	/* We have to free the Address-Information from getaddrinfo again */
-	freeaddrinfo(targetAdressInfo);
+    int iResult;
 
-	/* Creation of a socket for the communication with the Web Server using IPv4 and the TCP-Protocol */
-	SOCKET webSocket = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
-	if (webSocket == INVALID_SOCKET)
-	{
-		cout << "Creation of the Socket Failed" << endl;
-		system("pause");
-		WSACleanup();
-		return -1;
-	}
+	ZeroMemory( &hints, sizeof(hints) ); // make sure the struct is empty; same as memset()
+    hints.ai_family = AF_UNSPEC; // don't care IPv4 or IPv6
+    hints.ai_socktype = SOCK_STREAM; // TCP stream sockets
+    hints.ai_protocol = IPPROTO_TCP; // Set IP Protocol = TCP
 
-	/* Establishing a connection to the web Socket */
-	cout << "Connecting...\n";
-	if (connect(webSocket, (SOCKADDR*)&sockAddr, sizeof(sockAddr)) != 0)
-	{
-		cout << "Could not connect";
-		system("pause");
-		closesocket(webSocket);
-		WSACleanup();
-		return -1;
-	}
-	cout << "Connected.\n";
+    // Resolve the server address and port
+    iResult = getaddrinfo("cse.stfx.ca", DEFAULT_PORT, &hints, &result);
+    if (iResult != 0) {
+        cout << "getaddrinfo failed: " << iResult << endl;
+        WSACleanup();
+        return 1;
+    }
 
-	/* Sending a HTTP-GET-Request to the Web Server */
-	const char* httpRequest = "GET http://cse.stfx.ca/~pdsec13/index.php HTTP/1.1\r\nHost: cse.stfx.ca\r\nConnection: close\r\n\r\n";
-	int sentBytes = send(webSocket, httpRequest, strlen(httpRequest), 0);
-	if (sentBytes < strlen(httpRequest) || sentBytes == SOCKET_ERROR)
-	{
-		cout << "Could not send the request to the Server" << endl;
-		system("pause");
-		closesocket(webSocket);
-		WSACleanup();
-		return -1;
-	}
+    SOCKET ConnectSocket = INVALID_SOCKET;
 
-	/* Receiving and Displaying an answer from the Web Server */
-	char buffer[10000];
-	ZeroMemory(buffer, sizeof(buffer));
-	int dataLen;
-	while ((dataLen = recv(webSocket, buffer, sizeof(buffer), 0) > 0))
-	{
-		int i = 0;
-		while (buffer[i] >= 32 || buffer[i] == '\n' || buffer[i] == '\r') {
-			cout << buffer[i];
-			i += 1;
-		}
-	}
+    // Attempt to connect to the first address returned by
+    // the call to getaddrinfo
+    ptr = result;
 
-	/* Cleaning up Windows Socket Dependencies */
-	closesocket(webSocket);
-	WSACleanup();
+    // Create a SOCKET for connecting to server
+    ConnectSocket = socket(,,);
 
-	system("pause");
-	return 0;
+    if (ConnectSocket == INVALID_SOCKET) {
+        cout << "Error at socket(): " << WSAGetLastError() << endl;
+        freeaddrinfo(result);
+        WSACleanup();
+        return 1;
+
+   // Connect to server.
+   iResult = connect(                          ,                         ,                         );
+   if (iResult == SOCKET_ERROR) {
+        cout << "Client: Error at socket connect(): " << WSAGetLastError() << endl;
+        cout << "Client: Unable to connect to server!" << endl;
+        closesocket(ConnectSocket);
+        WSACleanup();
+        return 1;
+   }
+
+   // Should really try the next address returned by getaddrinfo
+   // if the connect call failed
+   // But for this simple example we just free the resources
+   // returned by getaddrinfo and print an error message
+
+   freeaddrinfo(result);
+
+    // Send an initial buffer#define DEFAULT_PORT "80"
+    iResult = send(                         ,                       ,                     ,                           );
+    if (iResult == SOCKET_ERROR) {
+        cout << "send failed: " << WSAGetLastError() << endl;
+        closesocket(ConnectSocket);
+        WSACleanup();
+        return 1;
+    }
+
+    cout << "Bytes S    #define DEFAULT_BUFLEN 2048";
+
+    int recvbuflen = DEFAULT_BUFLEN;
+
+    char *sendbuf = "This is a test\n";
+    char recvbuf[DEFAULT_BUFLEN];
+
+    int iResult;
+    ent: " << iResult << endl";
+
+    // shutdown the connection for sending since no more data will be sent
+    // the client can still use the ConnectSocket for receiving data
+    iResult = shutdown(                       ,                            );
+    if (iResult == SOCKET_ERROR) {
+        cout << "shutdown failed: " << WSAGetLastError() << endl;
+        closesocket(ConnectSocket);
+        WSACleanup();
+        return 1;
+    }
+
+    // Receive data until the server closes the connection
+    do {
+        iResult = recv(                        ,                     ,                         ,                              );
+        if (iResult > 0){
+        cout << "Bytes received: " << iResult << endl;
+        cout << recvbuf << endl;
+    }
+        else if (iResult == 0)
+            cout << "Connection closed\n";
+        else
+            cout << "recv failed: " << WSAGetLastError() << endl;
+    } while (iResult > 0);
+        return 0;
+    }
+
+    // cleanup
+    closesocket(ConnectSocket);
 }
